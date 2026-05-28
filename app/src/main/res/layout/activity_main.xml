@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1a1a2e">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🛡️ AnihiliusAdBlocker"
+            android:textSize="28sp"
+            android:textColor="#e94560"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="uBlock-powered ad blocking for Android"
+            android:textSize="14sp"
+            android:textColor="#888888"
+            android:layout_marginTop="8dp" />
+
+        <!-- Status Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="20dp"
+            android:layout_marginTop="32dp">
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⛔ Not Active"
+                android:textSize="18sp"
+                android:textColor="#ff6b6b"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Main Toggle Button -->
+        <Button
+            android:id="@+id/btnToggle"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="▶ START AD BLOCKER"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#ffffff"
+            android:backgroundTint="#4CAF50"
+            android:layout_marginTop="24dp" />
+
+        <!-- YouTube Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="16dp"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📺 YouTube"
+                android:textSize="16sp"
+                android:textColor="#ffffff"
+                android:textStyle="bold" />
+
+            <Switch
+                android:id="@+id/switchYoutube"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Block YouTube Ads"
+                android:textColor="#cccccc"
+                android:checked="true"
+                android:layout_marginTop="8dp" />
+
+            <Switch
+                android:id="@+id/switchYtBackground"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="YouTube Background Play"
+                android:textColor="#cccccc"
+                android:checked="true"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- Filters Status -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="16dp"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔍 Filters"
+                android:textSize="16sp"
+                android:textColor="#ffffff"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/filterStatusText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⏳ Loading filter lists..."
+                android:textSize="12sp"
+                android:textColor="#aaaaaa"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+
+        <!-- Stats -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📊 Statistics"
+                android:textSize="16sp"
+                android:textColor="#ffffff"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/statsText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Checked: 0\nBlocked: 0"
+                android:textSize="14sp"
+                android:textColor="#aaaaaa"
+                android:layout_marginTop="8dp"
+                android:lineSpacingExtra="4dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
