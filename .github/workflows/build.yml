@@ -34,8 +34,9 @@ jobs:
     - name: Install SDK platforms and build tools
       run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-    - name: Generate debug keystore
+    - name: Create .android directory and generate debug keystore
       run: |
+        mkdir -p ~/.android
         keytool -genkeypair -v \
           -keystore ~/.android/debug.keystore \
           -storepass android \
@@ -44,10 +45,20 @@ jobs:
           -keyalg RSA \
           -keysize 2048 \
           -validity 10000 \
-          -dname "CN=Android Debug,O=Android,C=US" || true
+          -dname "CN=Android Debug,O=Android,C=US"
 
     - name: Make gradlew executable
       run: chmod +x gradlew
+
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug --no-daemon --stacktrace
@@ -59,8 +70,6 @@ jobs:
       run: |
         echo "=== Finding all APKs ==="
         find . -name "*.apk" -type f 2>&1
-        echo "=== app/build/outputs ==="
-        find app/build/outputs -type f 2>&1 || echo "outputs dir not found"
 
     - name: Upload Debug APK (artifact)
       uses: actions/upload-artifact@v4
