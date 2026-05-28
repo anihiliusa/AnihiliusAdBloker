@@ -28,6 +28,12 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
+    - name: Accept Android SDK licenses
+      run: yes | sdkmanager --licenses || true
+
+    - name: Install SDK platforms and build tools
+      run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
     - name: Make gradlew executable
       run: chmod +x gradlew
 
@@ -42,16 +48,28 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Build Debug APK
-      run: ./gradlew assembleDebug --no-daemon
+      run: ./gradlew assembleDebug --no-daemon --stacktrace
 
     - name: Build Release APK
-      run: ./gradlew assembleRelease --no-daemon
+      run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+    - name: Find APK files
+      run: find app/build/outputs -name "*.apk" -type f 2>&1 || echo "No APK found, listing build/outputs:"
+      continue-on-error: true
+
+    - name: Debug build outputs
+      run: |
+        echo "=== Directory listing ==="
+        find app/build/outputs -type f 2>&1 || echo "build/outputs not found"
+        echo "=== Gradle tasks ==="
+        ./gradlew tasks --all 2>&1 | grep -i apk || echo "No APK tasks found"
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
         name: AnihiliusAdBlocker-debug
         path: app/build/outputs/apk/debug/*.apk
+        if-no-files-found: warn
         retention-days: 90
 
     - name: Upload Release APK
@@ -59,6 +77,7 @@ jobs:
       with:
         name: AnihiliusAdBlocker-release
         path: app/build/outputs/apk/release/*.apk
+        if-no-files-found: warn
         retention-days: 90
 
     - name: Create Release (on tag push)
