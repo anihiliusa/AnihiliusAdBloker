@@ -40,4 +40,4 @@ chmod +x gradlew
 - **Foreground Service** — Required for background operation
 - **Boot Complete** — Optional auto-start on boot
 
-## Made with ❤️ by Anihilius
+## Made with ❤️ by AnihiliusA
