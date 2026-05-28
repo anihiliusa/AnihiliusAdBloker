@@ -9,6 +9,8 @@
 - **Filter Management** — 100+ built-in filter rules, custom filters support
 - **Auto-start on Boot** — Optional auto-start after device restart
 - **Dark Theme** — Modern Material Design dark UI
+- **Whitelist Support** — Exclude specific apps from VPN filtering
+- **Filter Updates** — Online filter list updates with 100+ rules
 
 ## How It Works
 
@@ -39,5 +41,6 @@ chmod +x gradlew
 - **VPN Service** — Required for ad blocking
 - **Foreground Service** — Required for background operation
 - **Boot Complete** — Optional auto-start on boot
+- **Internet** — For filter updates
 
 ## Made with ❤️ by AnihiliusA
