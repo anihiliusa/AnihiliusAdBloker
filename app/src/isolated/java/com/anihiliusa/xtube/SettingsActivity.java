@@ -1,6 +1,7 @@
 package com.anihiliusa.xtube;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.ViewGroup;
@@ -25,16 +26,29 @@ public class SettingsActivity extends Activity {
         scroll.addView(root);
 
         TextView title = new TextView(this);
-        title.setText("Xtube v1.2.0");
+        title.setText("Xtube v1.2.1");
         title.setTextColor(Color.WHITE);
         title.setTextSize(25f);
         root.addView(title);
 
-        addInfo(root, "Browser engine: GeckoView");
+        addInfo(root, "Browser engine: GeckoView / Firefox-based layer");
+        addInfo(root, "uBlock Origin XPI is bundled in assets and loaded at app start.");
+
+        Button login = new Button(this);
+        login.setText("Open YouTube Login");
+        login.setOnClickListener(v -> {
+            Intent i = new Intent(this, MainActivity.class);
+            i.setAction("com.anihiliusa.xtube.LOGIN");
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(i);
+            finish();
+        });
+        root.addView(login, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
         addSwitch(root, "Clean page layer", true);
         addSwitch(root, "Network rules layer", true);
-        addSwitch(root, "Phone traffic layer", false);
-        addSwitch(root, "Background helper", true);
+        addInfo(root, "Phone traffic filter is experimental and will become active after the local DNS/VPN resolver is completed.");
+        addSwitch(root, "Background helper + PiP fallback", true);
 
         Button close = new Button(this);
         close.setText("Close");
