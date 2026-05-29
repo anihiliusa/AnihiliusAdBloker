@@ -1,0 +1,52 @@
+name: Build Xtube 1.2
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - uses: android-actions/setup-android@v3
+      - run: yes | sdkmanager --licenses || true
+      - run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
+      - name: Check project
+        run: gradle :app:tasks --no-daemon --stacktrace
+      - name: Assemble debug
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+      - name: Save file
+        run: |
+          mkdir -p apk output
+          FILE=$(find app/build/outputs/apk -name "*debug*.apk" -type f | head -n 1)
+          test -n "$FILE"
+          cp "$FILE" apk/Xtube-v1.2.0-debug.apk
+          cp "$FILE" output/Xtube-v1.2.0-debug.apk
+          ls -lh apk output
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Xtube-v1.2.0
+          path: output/Xtube-v1.2.0-debug.apk
+          if-no-files-found: error
+      - name: Commit file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f apk/Xtube-v1.2.0-debug.apk
+          git commit -m "Add Xtube 1.2 debug file [skip ci]" || echo "No changes"
+          git push
