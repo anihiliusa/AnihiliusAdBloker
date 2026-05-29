@@ -16,18 +16,12 @@ import androidx.core.app.NotificationCompat;
 import com.anihilius.adblocker.AnihiliusApp;
 import com.anihilius.adblocker.R;
 
-/**
- * YouTubeBackgroundService - enables background audio playback.
- * Intercepts media button events and keeps audio focus when YouTube is backgrounded.
- * Works by maintaining a foreground notification with media controls.
- */
 public class YouTubeBackgroundService extends Service {
 
     private static final String TAG = "YouTubeBgService";
     private static final int NOTIFICATION_ID = 1002;
 
     private AudioManager audioManager;
-    private boolean isPlaying = false;
 
     @Override
     public void onCreate() {
@@ -46,36 +40,19 @@ public class YouTubeBackgroundService extends Service {
 
         startForeground(NOTIFICATION_ID, createNotification());
         requestAudioFocus();
-        isPlaying = true;
         Log.i(TAG, "YouTube Background Service started");
         return START_STICKY;
     }
 
     private void requestAudioFocus() {
         if (audioManager != null) {
-            AudioManager.OnAudioFocusChangeListener focusChangeListener =
-                focusChange -> {
-                    switch (focusChange) {
-                        case AudioManager.AUDIOFOCUS_LOSS:
-                        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                            // Don't stop — we're keeping background play alive
-                            break;
-                        case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                            // Lower volume slightly
-                            break;
-                        case AudioManager.AUDIOFOCUS_GAIN:
-                            // Restore volume
-                            break;
-                    }
-                };
-
+            AudioManager.OnAudioFocusChangeListener focusChangeListener = focusChange -> Log.d(TAG, "Audio focus changed: " + focusChange);
             int result = audioManager.requestAudioFocus(
                 focusChangeListener,
                 AudioManager.STREAM_MUSIC,
                 AudioManager.AUDIOFOCUS_GAIN
             );
-
-            Log.d(TAG, "Audio focus result: " + (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED ? "GRANTED" : "DENIED"));
+            Log.d(TAG, "Audio focus result: " + result);
         }
     }
 
@@ -85,14 +62,15 @@ public class YouTubeBackgroundService extends Service {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG, "Media button received");
-                // Handle media button events here
             }
         }, filter, Context.RECEIVER_NOT_EXPORTED);
     }
 
     private Notification createNotification() {
-        Intent launchIntent = getPackageManager()
-                .getLaunchIntentForPackage("com.google.android.youtube");
+        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(getPackageName());
+        if (launchIntent == null) {
+            launchIntent = new Intent();
+        }
 
         PendingIntent contentPending = PendingIntent.getActivity(
             this, 0, launchIntent,
@@ -101,25 +79,25 @@ public class YouTubeBackgroundService extends Service {
 
         Intent stopIntent = new Intent(this, YouTubeBackgroundService.class);
         stopIntent.setAction("STOP_YOUTUBE");
-        int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-        PendingIntent stopPending = PendingIntent.getService(this, 1, stopIntent, flags);
+        PendingIntent stopPending = PendingIntent.getService(
+            this, 1, stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
 
         return new NotificationCompat.Builder(this, AnihiliusApp.YOUTUBE_CHANNEL_ID)
-                .setContentTitle("▶️ YouTube Background")
-                .setContentText("Background playback active")
+                .setContentTitle("Xtube Background")
+                .setContentText("Background mode active")
                 .setSmallIcon(R.drawable.ic_play)
                 .setContentIntent(contentPending)
                 .setOngoing(true)
                 .addAction(R.drawable.ic_stop, "Stop", stopPending)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
-                .setStyle(new NotificationCompat.MediaStyle())
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
                 .build();
     }
 
     @Override
     public void onDestroy() {
-        isPlaying = false;
         if (audioManager != null) {
             audioManager.abandonAudioFocus(focusChange -> {});
         }
