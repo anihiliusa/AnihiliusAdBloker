@@ -1,50 +1,52 @@
-# AnihiliusAdBlocker
+# Xtube / AnihiliusAdBloker
 
-🛡️ Android Ad Blocker with VPN-based filtering and YouTube background playback.
+Active Android test project in `main`.
 
-## Features
+## Current active app
 
-- **VPN-based Ad Blocking** — Intercepts DNS queries and blocks ad/tracking domains
-- **YouTube Background Play** — Keep YouTube audio playing when screen is off
-- **Filter Management** — 100+ built-in filter rules, custom filters support
-- **Auto-start on Boot** — Optional auto-start after device restart
-- **Dark Theme** — Modern Material Design dark UI
-- **Whitelist Support** — Exclude specific apps from VPN filtering
-- **Filter Updates** — Online filter list updates with 100+ rules
+- App name: `Xtube`
+- Package: `com.anihiliusa.xtube`
+- Version: `1.1.2`
+- Version code: `112`
+- Active Activity: `app/src/main/java/com/anihiliusa/xtube/MainActivity.java`
 
-## How It Works
+## Important
 
-1. **AdBlock VPN** creates a local VPN on your device
-2. All DNS queries pass through the filter engine
-3. Ad/tracking domains are blocked (NXDOMAIN response)
-4. Legitimate traffic passes through normally
+Old legacy files may still be visible in the repository because mass delete through the connector was blocked. The active Gradle build ignores them.
 
-## APK Build Status
+The active build is controlled by:
 
-Automatic Android APK build trigger: 2026-05-29 09:30 UTC.
-
-## Build
-
-### Automatic (GitHub Actions)
-Just push to `main` branch. APK will be built automatically.
-
-### Manual
-```bash
-chmod +x gradlew
-./gradlew assembleDebug
+```text
+app/build.gradle
 ```
 
-## Install
+It includes only the clean Java source path and excludes:
 
-1. Download the APK from [Releases](../../releases)
-2. Enable "Install from unknown sources" on your device
-3. Install and grant VPN permission
+```text
+com/anihilius/adblocker/**
+**/*.kt
+```
 
-## Permissions
+## APK output
 
-- **VPN Service** — Required for ad blocking
-- **Foreground Service** — Required for background operation
-- **Boot Complete** — Optional auto-start on boot
-- **Internet** — For filter updates
+After a successful GitHub Actions build, the APK is committed back into:
 
-## Made with ❤️ by AnihiliusA
+```text
+apk/Xtube-v1.1.2-debug.apk
+```
+
+## Build workflow
+
+Use:
+
+```text
+.github/workflows/build.yml
+```
+
+The workflow tests the Gradle project, builds the debug APK, uploads it as artifact, and pushes the APK back into the `apk/` folder.
+
+## Manual build
+
+```bash
+gradle :app:assembleDebug --no-daemon --stacktrace
+```
