@@ -1,25 +1,31 @@
 plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
 }
 
 android {
-    namespace 'com.anihiliusa.xtube'
+    namespace 'com.anihilius.adblocker'
     compileSdk 34
 
     defaultConfig {
-        applicationId 'com.anihiliusa.xtube'
+        applicationId 'com.anihilius.adblocker'
         minSdk 24
         targetSdk 34
         versionCode 112
         versionName '1.1.2'
     }
 
-    sourceSets {
-        main {
-            java {
-                exclude 'com/anihilius/adblocker/**'
-            }
+    signingConfigs {
+        debug {
+            storeFile file("${System.getProperty('user.home')}/.android/debug.keystore")
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+        release {
+            storeFile file("${System.getProperty('user.home')}/.android/debug.keystore")
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
         }
     }
 
@@ -27,20 +33,26 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
         debug {
+            minifyEnabled false
             debuggable true
+            signingConfig signingConfigs.debug
         }
     }
 
-    kotlinOptions {
-        jvmTarget = '17'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.activity:activity:1.8.2'
+    implementation 'androidx.core:core:1.12.0'
+    implementation 'androidx.media:media:1.7.0'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
