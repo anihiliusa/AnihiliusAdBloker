@@ -26,6 +26,14 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.5'
+      - name: Bundle uBlock Origin
+        run: |
+          set -e
+          mkdir -p app/src/isolated/assets/extensions/ublock
+          curl -L -o /tmp/ublock.xpi https://github.com/gorhill/uBlock/releases/download/1.71.0/uBlock0_1.71.0.firefox.signed.xpi
+          unzip -q /tmp/ublock.xpi -d app/src/isolated/assets/extensions/ublock
+          test -f app/src/isolated/assets/extensions/ublock/manifest.json
+          echo "uBlock Origin bundled from gorhill/uBlock release 1.71.0" > app/src/isolated/assets/extensions/ublock_origin_source.txt
       - name: Check project
         run: gradle :app:tasks --no-daemon --stacktrace
       - name: Assemble debug
@@ -47,6 +55,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f apk/Xtube-v1.2.0-debug.apk
-          git commit -m "Add Xtube 1.2 debug file [skip ci]" || echo "No changes"
+          git add -f apk/Xtube-v1.2.0-debug.apk app/src/isolated/assets/extensions/ublock app/src/isolated/assets/extensions/ublock_origin_source.txt
+          git commit -m "Add Xtube 1.2 build with uBlock Origin [skip ci]" || echo "No changes"
           git push
