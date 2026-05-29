@@ -29,11 +29,12 @@ jobs:
       - name: Bundle uBlock Origin
         run: |
           set -e
+          rm -rf app/src/isolated/assets/extensions/ublock
           mkdir -p app/src/isolated/assets/extensions/ublock
-          curl -L -o /tmp/ublock.xpi https://github.com/gorhill/uBlock/releases/download/1.71.0/uBlock0_1.71.0.firefox.signed.xpi
+          curl -fL -o /tmp/ublock.xpi https://github.com/gorhill/uBlock/releases/download/1.71.1b0/uBlock0_1.71.1b0.firefox.signed.xpi
           unzip -q /tmp/ublock.xpi -d app/src/isolated/assets/extensions/ublock
           test -f app/src/isolated/assets/extensions/ublock/manifest.json
-          echo "uBlock Origin bundled from gorhill/uBlock release 1.71.0" > app/src/isolated/assets/extensions/ublock_origin_source.txt
+          echo "uBlock Origin bundled from gorhill/uBlock release 1.71.1b0" > app/src/isolated/assets/extensions/ublock_origin_source.txt
       - name: Check project
         run: gradle :app:tasks --no-daemon --stacktrace
       - name: Assemble debug
