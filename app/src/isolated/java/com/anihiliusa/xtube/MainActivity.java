@@ -16,6 +16,8 @@ import org.mozilla.geckoview.GeckoRuntime;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.GeckoView;
 
+import java.lang.reflect.Method;
+
 public class MainActivity extends Activity {
     private GeckoView geckoView;
     private GeckoRuntime runtime;
@@ -74,12 +76,24 @@ public class MainActivity extends Activity {
         setContentView(root);
 
         runtime = GeckoRuntime.create(this);
+        installBundledExtension();
         session = new GeckoSession();
         session.open(runtime);
         geckoView.setSession(session);
 
         startBackgroundHelper();
         session.loadUri("https://m.youtube.com/");
+    }
+
+    private void installBundledExtension() {
+        try {
+            Object controller = GeckoRuntime.class.getMethod("getWebExtensionController").invoke(runtime);
+            Method method = controller.getClass().getMethod("ensureBuiltIn", String.class, String.class);
+            method.invoke(controller, "resource://android/assets/extensions/ublock/", "uBlock0@raymondhill.net");
+            if (status != null) status.setText("Firefox engine + uBO");
+        } catch (Exception ignored) {
+            if (status != null) status.setText("Firefox engine");
+        }
     }
 
     private void startBackgroundHelper() {
