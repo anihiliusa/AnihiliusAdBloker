@@ -1,5 +1,5 @@
 (() => {
-  const STYLE_ID = 'xtube-safe-layout-v3';
+  const STYLE_ID = 'xtube-safe-layout-v4';
 
   function isWatchPage() {
     return location.pathname === '/watch' || location.href.includes('/watch?');
@@ -26,8 +26,21 @@
         pointer-events: none !important;
       }
       html, body { background: #050508 !important; }
+      meta[name='viewport'] { content: width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no; }
     `;
     (document.documentElement || document.head || document.body).appendChild(style);
+  }
+
+  function ensureMobileViewport() {
+    try {
+      let viewport = document.querySelector('meta[name="viewport"]');
+      if (!viewport) {
+        viewport = document.createElement('meta');
+        viewport.name = 'viewport';
+        document.head.appendChild(viewport);
+      }
+      viewport.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+    } catch (e) {}
   }
 
   function addWatchStyle() {
@@ -136,16 +149,10 @@
       const video = document.querySelector('video');
       const player = document.querySelector('.html5-video-player');
       if (video && player && /ad-showing|ad-interrupting/.test(player.className || '')) {
-        if (Number.isFinite(video.duration) && video.duration > 0 && video.duration <= 8) video.currentTime = video.duration;
-        video.play().catch(() => {});
-      }
-    } catch (e) {}
-  }
-
-  function keepPlayback() {
-    try {
-      const video = document.querySelector('video');
-      if (video && video.paused && !video.ended && isWatchPage()) {
+        const d = video.duration;
+        if (Number.isFinite(d) && d > 0 && d <= 8) {
+          video.currentTime = Math.max(0, d - 0.15);
+        }
         video.play().catch(() => {});
       }
     } catch (e) {}
@@ -153,13 +160,13 @@
 
   function run() {
     addStyle();
+    ensureMobileViewport();
     addWatchStyle();
     keepVisibleState();
     removeBaseNodes();
     removeWatchNodes();
     closePrompts();
     shortClipGuard();
-    keepPlayback();
   }
 
   run();
