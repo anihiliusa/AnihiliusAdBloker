@@ -21,7 +21,7 @@
 
 ## APK Build Status
 
-Automatic Android APK build trigger: 2026-05-29 09:00 UTC.
+Automatic Android APK build trigger: 2026-05-29 09:30 UTC.
 
 ## Build
 
