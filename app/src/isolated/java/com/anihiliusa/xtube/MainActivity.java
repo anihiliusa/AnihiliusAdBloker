@@ -1,15 +1,12 @@
 package com.anihiliusa.xtube;
 
 import android.app.Activity;
-import android.app.PictureInPictureParams;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Rational;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -85,7 +82,7 @@ public class MainActivity extends Activity {
         topBar.addView(settings, new LinearLayout.LayoutParams(dp(38), ViewGroup.LayoutParams.MATCH_PARENT));
 
         status = new TextView(this);
-        status.setText("Firefox engine + uBO");
+        status.setText("Firefox engine + helper");
         status.setTextColor(Color.rgb(255, 80, 80));
         status.setTextSize(12f);
         status.setGravity(Gravity.CENTER);
@@ -153,18 +150,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void enterPipIfPossible() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return;
-        try {
-            PictureInPictureParams params = new PictureInPictureParams.Builder()
-                    .setAspectRatio(new Rational(16, 9))
-                    .build();
-            enterPictureInPictureMode(params);
-        } catch (Exception ignored) {
-        }
-    }
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -175,7 +160,6 @@ public class MainActivity extends Activity {
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();
         startBackgroundHelper();
-        enterPipIfPossible();
     }
 
     @Override
@@ -183,12 +167,6 @@ public class MainActivity extends Activity {
         super.onResume();
         startBackgroundHelper();
         showTopBarTemporarily();
-    }
-
-    @Override
-    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
-        super.onPictureInPictureModeChanged(isInPictureInPictureMode);
-        if (topBar != null) topBar.setVisibility(isInPictureInPictureMode ? View.GONE : View.VISIBLE);
     }
 
     @Override
