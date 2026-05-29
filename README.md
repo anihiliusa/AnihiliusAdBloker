@@ -19,6 +19,10 @@
 3. Ad/tracking domains are blocked (NXDOMAIN response)
 4. Legitimate traffic passes through normally
 
+## APK Build Status
+
+Automatic Android APK build trigger: 2026-05-29 09:00 UTC.
+
 ## Build
 
 ### Automatic (GitHub Actions)
