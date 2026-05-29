@@ -16,11 +16,9 @@ android {
 
     sourceSets {
         main {
-            java {
-                srcDirs = ['src/main/java']
-                exclude 'com/anihilius/adblocker/**'
-                exclude '**/*.kt'
-            }
+            manifest.srcFile 'src/isolated/AndroidManifest.xml'
+            java.srcDirs = ['src/isolated/java']
+            res.srcDirs = ['src/isolated/res']
         }
     }
 
@@ -31,7 +29,6 @@ android {
         }
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
