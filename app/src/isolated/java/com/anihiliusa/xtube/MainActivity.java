@@ -28,6 +28,7 @@ public class MainActivity extends Activity {
     private GeckoSession session;
     private TextView status;
     private LinearLayout topBar;
+    private boolean isFullscreen = false;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
 
     @Override
@@ -44,7 +45,7 @@ public class MainActivity extends Activity {
         geckoView.setBackgroundColor(Color.rgb(5, 5, 8));
         geckoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         geckoView.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_DOWN) showTopBarTemporarily();
+            if (event.getAction() == MotionEvent.ACTION_DOWN && !isFullscreen) showTopBarTemporarily();
             return false;
         });
 
@@ -53,25 +54,24 @@ public class MainActivity extends Activity {
         topBar.setGravity(Gravity.CENTER_VERTICAL);
         topBar.setPadding(dp(10), dp(4), dp(8), dp(4));
         topBar.setBackgroundColor(Color.rgb(5, 5, 8));
-        FrameLayout.LayoutParams topParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(39), Gravity.TOP);
-        topBar.setLayoutParams(topParams);
+        topBar.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(39), Gravity.TOP));
 
-        TextView logo = new TextView(this);
-        logo.setText("▶ Xtube");
-        logo.setTextColor(Color.WHITE);
-        logo.setTextSize(14f);
-        logo.setGravity(Gravity.CENTER_VERTICAL);
-        logo.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        topBar.addView(logo, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        TextView title = new TextView(this);
+        title.setText("▶ Xtube");
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(14f);
+        title.setGravity(Gravity.CENTER_VERTICAL);
+        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        topBar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
 
-        TextView login = new TextView(this);
-        login.setText("Login");
-        login.setTextColor(Color.WHITE);
-        login.setTextSize(11f);
-        login.setGravity(Gravity.CENTER);
-        login.setBackgroundColor(Color.rgb(35, 35, 42));
-        login.setOnClickListener(v -> loadUrl("https://accounts.google.com/ServiceLogin?service=youtube"));
-        topBar.addView(login, new LinearLayout.LayoutParams(dp(66), dp(28)));
+        TextView home = new TextView(this);
+        home.setText("YouTube");
+        home.setTextColor(Color.WHITE);
+        home.setTextSize(11f);
+        home.setGravity(Gravity.CENTER);
+        home.setBackgroundColor(Color.rgb(35, 35, 42));
+        home.setOnClickListener(v -> loadUrl("https://www.youtube.com/"));
+        topBar.addView(home, new LinearLayout.LayoutParams(dp(76), dp(28)));
 
         TextView settings = new TextView(this);
         settings.setText("⚙");
@@ -82,10 +82,7 @@ public class MainActivity extends Activity {
         topBar.addView(settings, new LinearLayout.LayoutParams(dp(38), ViewGroup.LayoutParams.MATCH_PARENT));
 
         status = new TextView(this);
-        status.setText("Firefox engine + helper");
-        status.setTextColor(Color.rgb(255, 80, 80));
-        status.setTextSize(12f);
-        status.setGravity(Gravity.CENTER);
+        status.setText("Firefox engine");
         status.setVisibility(View.GONE);
 
         root.addView(geckoView);
@@ -94,7 +91,7 @@ public class MainActivity extends Activity {
         setContentView(root);
 
         runtime = GeckoRuntime.create(this);
-        installBundledExtensions();
+        installBuiltInExtension("resource://android/assets/extensions/ublock_origin.xpi", "uBlock0@raymondhill.net");
         session = new GeckoSession();
         session.open(runtime);
         session.setContentDelegate(new GeckoSession.ContentDelegate() {
@@ -107,7 +104,7 @@ public class MainActivity extends Activity {
 
         startBackgroundHelper();
         showTopBarTemporarily();
-        loadUrl("https://m.youtube.com/feed/trending");
+        loadUrl("https://www.youtube.com/");
     }
 
     private int dp(int value) {
@@ -115,16 +112,19 @@ public class MainActivity extends Activity {
     }
 
     private void showTopBarTemporarily() {
-        if (topBar == null) return;
+        if (topBar == null || isFullscreen) return;
         topBar.setVisibility(View.VISIBLE);
         topBar.animate().alpha(1f).setDuration(120).start();
         uiHandler.removeCallbacksAndMessages(null);
         uiHandler.postDelayed(() -> {
-            if (topBar != null) topBar.animate().alpha(0f).setDuration(250).withEndAction(() -> topBar.setVisibility(View.GONE)).start();
+            if (topBar != null && !isFullscreen) {
+                topBar.animate().alpha(0f).setDuration(250).withEndAction(() -> topBar.setVisibility(View.GONE)).start();
+            }
         }, 1500);
     }
 
     private void applyFullscreen(boolean fullScreen) {
+        isFullscreen = fullScreen;
         View decor = getWindow().getDecorView();
         if (fullScreen) {
             decor.setSystemUiVisibility(
@@ -146,32 +146,21 @@ public class MainActivity extends Activity {
         if (session != null) session.loadUri(url);
     }
 
-    private void installBundledExtensions() {
-        tryInstallExtension("resource://android/assets/extensions/ublock_origin.xpi", "uBlock0@raymondhill.net");
-        tryInstallExtension("resource://android/assets/extensions/xtube_helper/", "xtube-helper@anihiliusa");
-    }
-
-    private void tryInstallExtension(String uri, String id) {
+    private void installBuiltInExtension(String uri, String id) {
         try {
             Object controller = GeckoRuntime.class.getMethod("getWebExtensionController").invoke(runtime);
             Method method = controller.getClass().getMethod("ensureBuiltIn", String.class, String.class);
             method.invoke(controller, uri, id);
-            if (status != null) status.setText("Firefox engine + helper");
         } catch (Exception ignored) {
-            if (status != null) status.setText("Firefox engine");
         }
     }
 
     private void startBackgroundHelper() {
         try {
             Intent intent = new Intent(this, KeepAliveService.class);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent);
-            } else {
-                startService(intent);
-            }
-        } catch (Exception ignored) {
-        }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent);
+            else startService(intent);
+        } catch (Exception ignored) {}
     }
 
     @Override
@@ -195,19 +184,18 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (session != null) {
-            session.goBack();
-        } else {
-            super.onBackPressed();
+        if (isFullscreen) {
+            applyFullscreen(false);
+            return;
         }
+        if (session != null) session.goBack();
+        else super.onBackPressed();
     }
 
     @Override
     protected void onDestroy() {
         uiHandler.removeCallbacksAndMessages(null);
-        if (session != null) {
-            session.close();
-        }
+        if (session != null) session.close();
         super.onDestroy();
     }
 }
