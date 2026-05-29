@@ -97,11 +97,17 @@ public class MainActivity extends Activity {
         installBundledExtensions();
         session = new GeckoSession();
         session.open(runtime);
+        session.setContentDelegate(new GeckoSession.ContentDelegate() {
+            @Override
+            public void onFullScreen(GeckoSession session, boolean fullScreen) {
+                applyFullscreen(fullScreen);
+            }
+        });
         geckoView.setSession(session);
 
         startBackgroundHelper();
         showTopBarTemporarily();
-        loadUrl("https://m.youtube.com/");
+        loadUrl("https://m.youtube.com/feed/trending");
     }
 
     private int dp(int value) {
@@ -116,6 +122,24 @@ public class MainActivity extends Activity {
         uiHandler.postDelayed(() -> {
             if (topBar != null) topBar.animate().alpha(0f).setDuration(250).withEndAction(() -> topBar.setVisibility(View.GONE)).start();
         }, 1500);
+    }
+
+    private void applyFullscreen(boolean fullScreen) {
+        View decor = getWindow().getDecorView();
+        if (fullScreen) {
+            decor.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_FULLSCREEN |
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            );
+            if (topBar != null) topBar.setVisibility(View.GONE);
+        } else {
+            decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+            showTopBarTemporarily();
+        }
     }
 
     private void loadUrl(String url) {
