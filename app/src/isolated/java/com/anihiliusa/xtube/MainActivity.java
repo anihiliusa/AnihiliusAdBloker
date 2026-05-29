@@ -1,11 +1,15 @@
 package com.anihiliusa.xtube;
 
 import android.app.Activity;
+import android.app.PictureInPictureParams;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Rational;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.FrameLayout;
@@ -23,6 +27,7 @@ public class MainActivity extends Activity {
     private GeckoRuntime runtime;
     private GeckoSession session;
     private TextView status;
+    private LinearLayout topBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,20 +43,30 @@ public class MainActivity extends Activity {
         geckoView.setBackgroundColor(Color.rgb(5, 5, 8));
         geckoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        LinearLayout topBar = new LinearLayout(this);
+        topBar = new LinearLayout(this);
         topBar.setOrientation(LinearLayout.HORIZONTAL);
         topBar.setGravity(Gravity.CENTER_VERTICAL);
-        topBar.setPadding(24, 12, 24, 10);
-        topBar.setBackgroundColor(Color.argb(210, 5, 5, 8));
-        FrameLayout.LayoutParams topParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 82, Gravity.TOP);
+        topBar.setPadding(dp(14), dp(8), dp(12), dp(8));
+        topBar.setBackgroundColor(Color.rgb(5, 5, 8));
+        FrameLayout.LayoutParams topParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(78), Gravity.TOP);
         topBar.setLayoutParams(topParams);
 
         TextView logo = new TextView(this);
         logo.setText("▶ Xtube");
         logo.setTextColor(Color.WHITE);
-        logo.setTextSize(18f);
+        logo.setTextSize(19f);
+        logo.setGravity(Gravity.CENTER_VERTICAL);
         logo.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         topBar.addView(logo, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+
+        TextView login = new TextView(this);
+        login.setText("Login");
+        login.setTextColor(Color.WHITE);
+        login.setTextSize(14f);
+        login.setGravity(Gravity.CENTER);
+        login.setBackgroundColor(Color.rgb(35, 35, 42));
+        login.setOnClickListener(v -> loadUrl("https://accounts.google.com/ServiceLogin?service=youtube"));
+        topBar.addView(login, new LinearLayout.LayoutParams(dp(86), dp(46)));
 
         TextView settings = new TextView(this);
         settings.setText("⚙");
@@ -59,16 +74,14 @@ public class MainActivity extends Activity {
         settings.setTextSize(24f);
         settings.setGravity(Gravity.CENTER);
         settings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
-        topBar.addView(settings, new LinearLayout.LayoutParams(72, ViewGroup.LayoutParams.MATCH_PARENT));
+        topBar.addView(settings, new LinearLayout.LayoutParams(dp(54), ViewGroup.LayoutParams.MATCH_PARENT));
 
         status = new TextView(this);
-        status.setText("Firefox engine");
+        status.setText("Firefox engine + uBO");
         status.setTextColor(Color.rgb(255, 80, 80));
         status.setTextSize(12f);
         status.setGravity(Gravity.CENTER);
-        FrameLayout.LayoutParams sp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 42, Gravity.BOTTOM);
-        status.setLayoutParams(sp);
-        status.setBackgroundColor(Color.argb(150, 5, 5, 8));
+        status.setVisibility(View.GONE);
 
         root.addView(geckoView);
         root.addView(topBar);
@@ -82,14 +95,22 @@ public class MainActivity extends Activity {
         geckoView.setSession(session);
 
         startBackgroundHelper();
-        session.loadUri("https://m.youtube.com/");
+        loadUrl("https://m.youtube.com/");
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private void loadUrl(String url) {
+        if (session != null) session.loadUri(url);
     }
 
     private void installBundledExtension() {
         try {
             Object controller = GeckoRuntime.class.getMethod("getWebExtensionController").invoke(runtime);
             Method method = controller.getClass().getMethod("ensureBuiltIn", String.class, String.class);
-            method.invoke(controller, "resource://android/assets/extensions/ublock/", "uBlock0@raymondhill.net");
+            method.invoke(controller, "resource://android/assets/extensions/ublock_origin.xpi", "uBlock0@raymondhill.net");
             if (status != null) status.setText("Firefox engine + uBO");
         } catch (Exception ignored) {
             if (status != null) status.setText("Firefox engine");
@@ -108,6 +129,18 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void enterPipIfPossible() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return;
+        try {
+            PictureInPictureParams params = new PictureInPictureParams.Builder()
+                    .setAspectRatio(new Rational(16, 9))
+                    .build();
+            enterPictureInPictureMode(params);
+        } catch (Exception ignored) {
+        }
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -115,9 +148,22 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        startBackgroundHelper();
+        enterPipIfPossible();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         startBackgroundHelper();
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode);
+        if (topBar != null) topBar.setVisibility(isInPictureInPictureMode ? View.GONE : View.VISIBLE);
     }
 
     @Override
