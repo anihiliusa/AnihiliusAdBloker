@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
         uiHandler.removeCallbacksAndMessages(null);
         uiHandler.postDelayed(() -> {
             if (topBar != null) topBar.animate().alpha(0f).setDuration(250).withEndAction(() -> topBar.setVisibility(View.GONE)).start();
-        }, 3000);
+        }, 1500);
     }
 
     private void loadUrl(String url) {
