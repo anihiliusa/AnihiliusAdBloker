@@ -34,7 +34,7 @@ jobs:
     - name: Install SDK platforms and build tools
       run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-    - name: Create .android directory and generate debug keystore
+    - name: Generate debug keystore
       run: |
         mkdir -p ~/.android
         keytool -genkeypair -v \
@@ -47,32 +47,31 @@ jobs:
           -validity 10000 \
           -dname "CN=Android Debug,O=Android,C=US" || true
 
-    - name: Make gradlew executable
-      run: chmod +x gradlew
-
-    - name: Cache Gradle packages
-      uses: actions/cache@v4
+    - name: Setup Gradle 8.5
+      uses: gradle/actions/setup-gradle@v4
       with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+        gradle-version: '8.5'
+
+    - name: Show project structure
+      run: |
+        pwd
+        ls -la
+        ls -la app || true
+        gradle projects --no-daemon --stacktrace
 
     - name: Build Debug APK
-      run: ./gradlew assembleDebug --no-daemon --stacktrace
+      run: gradle :app:assembleDebug --no-daemon --stacktrace
 
     - name: Build Release APK
-      run: ./gradlew assembleRelease --no-daemon --stacktrace
+      run: gradle :app:assembleRelease --no-daemon --stacktrace
 
     - name: Prepare APK files
       run: |
         mkdir -p output
         echo "=== Finding all APKs ==="
         find . -name "*.apk" -type f -print
-        DEBUG_APK=$(find app/build/outputs/apk -name "*debug*.apk" -type f | head -n 1)
-        RELEASE_APK=$(find app/build/outputs/apk -name "*release*.apk" -type f | head -n 1)
+        DEBUG_APK=$(find . -name "*debug*.apk" -type f | head -n 1)
+        RELEASE_APK=$(find . -name "*release*.apk" -type f | head -n 1)
         echo "Debug APK: $DEBUG_APK"
         echo "Release APK: $RELEASE_APK"
         test -n "$DEBUG_APK"
@@ -88,7 +87,7 @@ jobs:
         if-no-files-found: error
         retention-days: 90
 
-    - name: Create GitHub Release (on tag push)
+    - name: Create GitHub Release on tag
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v2
       with:
