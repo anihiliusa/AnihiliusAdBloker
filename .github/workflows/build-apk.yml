@@ -7,11 +7,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  actions: read
 
 jobs:
   build-apk:
+    name: Build debug APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -26,39 +29,22 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK components
+      - name: Install Android SDK packages
         run: |
+          yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Set up Gradle
+      - name: Set up Gradle 8.5
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.4'
+          gradle-version: '8.5'
 
       - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
+        run: gradle --no-daemon --stacktrace assembleDebug
 
-      - name: Build release APK
-        run: gradle --no-daemon assembleRelease
-
-      - name: Upload debug APK artifact
+      - name: Upload installable debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: AnihiliusAdBlocker-debug-apk
+          name: app-debug-apk
           path: app/build/outputs/apk/debug/*.apk
-
-      - name: Upload release APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: AnihiliusAdBlocker-release-apk
-          path: app/build/outputs/apk/release/*.apk
-
-      - name: Publish latest APK release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: latest-apk
-          name: Latest APK Build
-          allowUpdates: true
-          replacesArtifacts: true
-          prerelease: true
-          artifacts: "app/build/outputs/apk/debug/*.apk,app/build/outputs/apk/release/*.apk"
+          if-no-files-found: error
