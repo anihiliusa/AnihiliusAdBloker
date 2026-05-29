@@ -1,0 +1,21 @@
+{
+  "manifest_version": 2,
+  "name": "Xtube Helper",
+  "version": "1.0.0",
+  "description": "Xtube mobile playback and interface helper.",
+  "applications": {
+    "gecko": {
+      "id": "xtube-helper@anihiliusa"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*",
+        "*://youtube.com/*"
+      ],
+      "js": ["xtube-helper.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
