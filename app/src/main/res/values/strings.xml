@@ -1,6 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AnihiliusAdBlocker</string>
-    <string name="vpn_notification_channel">AnihiliusAdBlocker VPN</string>
-    <string name="filter_update_channel">Filter Updates</string>
+    <string name="app_name">Xtube</string>
 </resources>
