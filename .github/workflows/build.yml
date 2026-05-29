@@ -10,9 +10,12 @@ permissions:
 
 jobs:
   build:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -21,13 +24,19 @@ jobs:
       - run: yes | sdkmanager --licenses || true
       - run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
       - run: chmod +x ./gradlew
-      - run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
-      - run: |
-          mkdir -p output
+      - name: Test Gradle project
+        run: ./gradlew :app:tasks --no-daemon --stacktrace
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+      - name: Save APK in repository folder
+        run: |
+          mkdir -p apk output
           find . -name "*.apk" -type f -print
-          DEBUG_APK=$(find . -name "*debug*.apk" -type f | head -n 1)
+          DEBUG_APK=$(find app/build/outputs/apk -name "*debug*.apk" -type f | head -n 1)
           test -n "$DEBUG_APK"
+          cp "$DEBUG_APK" apk/Xtube-v1.1.2-debug.apk
           cp "$DEBUG_APK" output/Xtube-v1.1.2-debug.apk
+          ls -lh apk output
       - uses: actions/upload-artifact@v4
         with:
           name: Xtube-v1.1.2-APK
@@ -41,3 +50,10 @@ jobs:
           prerelease: true
           files: output/Xtube-v1.1.2-debug.apk
           fail_on_unmatched_files: true
+      - name: Commit APK back to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f apk/Xtube-v1.1.2-debug.apk
+          git commit -m "Add built Xtube v1.1.2 APK [skip ci]" || echo "No APK changes"
+          git push
