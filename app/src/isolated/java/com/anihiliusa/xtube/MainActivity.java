@@ -10,10 +10,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -23,7 +23,6 @@ import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.GeckoView;
 
 import java.lang.reflect.Method;
-import java.net.URLEncoder;
 
 public class MainActivity extends Activity {
     private static final int REQ_AUDIO = 301;
@@ -31,8 +30,7 @@ public class MainActivity extends Activity {
     private GeckoView geckoView;
     private GeckoRuntime runtime;
     private GeckoSession session;
-    private LinearLayout appHeader;
-    private EditText searchInput;
+    private LinearLayout topBar;
     private boolean isFullscreen = false;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
 
@@ -48,16 +46,12 @@ public class MainActivity extends Activity {
         shell.setBackgroundColor(Color.rgb(5, 5, 8));
         shell.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        appHeader = new LinearLayout(this);
-        appHeader.setOrientation(LinearLayout.VERTICAL);
-        appHeader.setBackgroundColor(Color.rgb(5, 5, 8));
-        appHeader.setPadding(dp(8), dp(4), dp(8), dp(6));
-        appHeader.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        LinearLayout topRow = new LinearLayout(this);
-        topRow.setOrientation(LinearLayout.HORIZONTAL);
-        topRow.setGravity(Gravity.CENTER_VERTICAL);
-        topRow.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(34)));
+        topBar = new LinearLayout(this);
+        topBar.setOrientation(LinearLayout.HORIZONTAL);
+        topBar.setGravity(Gravity.CENTER_VERTICAL);
+        topBar.setPadding(dp(10), dp(4), dp(8), dp(4));
+        topBar.setBackgroundColor(Color.rgb(5, 5, 8));
+        topBar.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(39)));
 
         TextView title = new TextView(this);
         title.setText("▶ Xtube");
@@ -65,7 +59,7 @@ public class MainActivity extends Activity {
         title.setTextSize(14f);
         title.setGravity(Gravity.CENTER_VERTICAL);
         title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        topRow.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        topBar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
 
         TextView home = new TextView(this);
         home.setText("YouTube");
@@ -74,7 +68,7 @@ public class MainActivity extends Activity {
         home.setGravity(Gravity.CENTER);
         home.setBackgroundColor(Color.rgb(35, 35, 42));
         home.setOnClickListener(v -> loadUrl("https://www.youtube.com/"));
-        topRow.addView(home, new LinearLayout.LayoutParams(dp(76), dp(28)));
+        topBar.addView(home, new LinearLayout.LayoutParams(dp(76), dp(28)));
 
         TextView settings = new TextView(this);
         settings.setText("⚙");
@@ -82,56 +76,7 @@ public class MainActivity extends Activity {
         settings.setTextSize(18f);
         settings.setGravity(Gravity.CENTER);
         settings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
-        topRow.addView(settings, new LinearLayout.LayoutParams(dp(38), ViewGroup.LayoutParams.MATCH_PARENT));
-
-        LinearLayout searchRow = new LinearLayout(this);
-        searchRow.setOrientation(LinearLayout.HORIZONTAL);
-        searchRow.setGravity(Gravity.CENTER_VERTICAL);
-        searchRow.setPadding(0, dp(4), 0, 0);
-        searchRow.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(42)));
-
-        searchInput = new EditText(this);
-        searchInput.setSingleLine(true);
-        searchInput.setHint("Search YouTube");
-        searchInput.setHintTextColor(Color.rgb(165, 165, 170));
-        searchInput.setTextColor(Color.WHITE);
-        searchInput.setTextSize(14f);
-        searchInput.setPadding(dp(12), 0, dp(12), 0);
-        searchInput.setBackgroundColor(Color.rgb(32, 32, 38));
-        searchInput.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
-        searchInput.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
-                runSearch();
-                return true;
-            }
-            return false;
-        });
-        searchRow.addView(searchInput, new LinearLayout.LayoutParams(0, dp(36), 1f));
-
-        TextView go = new TextView(this);
-        go.setText("Go");
-        go.setTextColor(Color.WHITE);
-        go.setTextSize(12f);
-        go.setGravity(Gravity.CENTER);
-        go.setBackgroundColor(Color.rgb(44, 44, 52));
-        go.setOnClickListener(v -> runSearch());
-        LinearLayout.LayoutParams goParams = new LinearLayout.LayoutParams(dp(44), dp(36));
-        goParams.leftMargin = dp(6);
-        searchRow.addView(go, goParams);
-
-        TextView mic = new TextView(this);
-        mic.setText("🎙");
-        mic.setTextColor(Color.WHITE);
-        mic.setTextSize(17f);
-        mic.setGravity(Gravity.CENTER);
-        mic.setBackgroundColor(Color.rgb(44, 44, 52));
-        mic.setOnClickListener(v -> requestMicrophoneThenOpenVoiceSearch());
-        LinearLayout.LayoutParams micParams = new LinearLayout.LayoutParams(dp(42), dp(36));
-        micParams.leftMargin = dp(6);
-        searchRow.addView(mic, micParams);
-
-        appHeader.addView(topRow);
-        appHeader.addView(searchRow);
+        topBar.addView(settings, new LinearLayout.LayoutParams(dp(38), ViewGroup.LayoutParams.MATCH_PARENT));
 
         FrameLayout browserFrame = new FrameLayout(this);
         browserFrame.setBackgroundColor(Color.rgb(5, 5, 8));
@@ -140,9 +85,13 @@ public class MainActivity extends Activity {
         geckoView = new GeckoView(this);
         geckoView.setBackgroundColor(Color.rgb(5, 5, 8));
         geckoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        geckoView.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN && !isFullscreen) showTopBarTemporarily();
+            return false;
+        });
         browserFrame.addView(geckoView);
 
-        shell.addView(appHeader);
+        shell.addView(topBar);
         shell.addView(browserFrame);
         setContentView(shell);
 
@@ -161,10 +110,8 @@ public class MainActivity extends Activity {
             public void onAndroidPermissionsRequest(GeckoSession session, String[] permissions, GeckoSession.PermissionDelegate.Callback callback) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_AUDIO);
-                    callback.grant();
-                } else {
-                    callback.grant();
                 }
+                callback.grant();
             }
 
             @Override
@@ -176,6 +123,7 @@ public class MainActivity extends Activity {
         geckoView.setSession(session);
 
         startBackgroundHelper();
+        showTopBarTemporarily();
         loadUrl("https://www.youtube.com/");
     }
 
@@ -183,21 +131,16 @@ public class MainActivity extends Activity {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
-    private void runSearch() {
-        try {
-            String q = searchInput == null ? "" : searchInput.getText().toString().trim();
-            if (q.length() == 0) return;
-            String encoded = URLEncoder.encode(q, "UTF-8");
-            loadUrl("https://www.youtube.com/results?search_query=" + encoded);
-        } catch (Exception ignored) {
-        }
-    }
-
-    private void requestMicrophoneThenOpenVoiceSearch() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_AUDIO);
-        }
-        loadUrl("https://www.youtube.com/voice_search");
+    private void showTopBarTemporarily() {
+        if (topBar == null || isFullscreen) return;
+        topBar.setVisibility(View.VISIBLE);
+        topBar.animate().alpha(1f).setDuration(100).start();
+        uiHandler.removeCallbacksAndMessages(null);
+        uiHandler.postDelayed(() -> {
+            if (topBar != null && !isFullscreen) {
+                topBar.animate().alpha(0f).setDuration(220).withEndAction(() -> topBar.setVisibility(View.GONE)).start();
+            }
+        }, 1500);
     }
 
     private void applyFullscreen(boolean fullScreen) {
@@ -212,10 +155,10 @@ public class MainActivity extends Activity {
                     View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
             );
-            if (appHeader != null) appHeader.setVisibility(View.GONE);
+            if (topBar != null) topBar.setVisibility(View.GONE);
         } else {
             decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-            if (appHeader != null) appHeader.setVisibility(View.VISIBLE);
+            showTopBarTemporarily();
         }
     }
 
@@ -256,6 +199,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         startBackgroundHelper();
+        showTopBarTemporarily();
     }
 
     @Override
