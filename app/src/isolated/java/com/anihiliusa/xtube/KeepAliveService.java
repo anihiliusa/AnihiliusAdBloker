@@ -6,30 +6,56 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.media.session.MediaSession;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 
 public class KeepAliveService extends Service {
     private static final String CHANNEL_ID = "xtube_background";
     private static final int NOTIFICATION_ID = 112;
+    private MediaSession mediaSession;
+    private PowerManager.WakeLock wakeLock;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        mediaSession = new MediaSession(this, "XtubeMediaSession");
+        mediaSession.setActive(true);
+        acquireWakeLock();
         startForeground(NOTIFICATION_ID, buildNotification());
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (mediaSession == null) {
+            mediaSession = new MediaSession(this, "XtubeMediaSession");
+            mediaSession.setActive(true);
+        }
+        acquireWakeLock();
         startForeground(NOTIFICATION_ID, buildNotification());
         return START_STICKY;
+    }
+
+    private void acquireWakeLock() {
+        try {
+            if (wakeLock == null) {
+                PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+                if (pm != null) {
+                    wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Xtube:BackgroundPlayback");
+                    wakeLock.setReferenceCounted(false);
+                }
+            }
+            if (wakeLock != null && !wakeLock.isHeld()) wakeLock.acquire(10 * 60 * 1000L);
+        } catch (Exception ignored) {
+        }
     }
 
     private Notification buildNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
-                    "Xtube background",
+                    "Xtube background playback",
                     NotificationManager.IMPORTANCE_LOW
             );
             NotificationManager manager = getSystemService(NotificationManager.class);
@@ -52,10 +78,24 @@ public class KeepAliveService extends Service {
         return builder
                 .setSmallIcon(android.R.drawable.ic_media_play)
                 .setContentTitle("Xtube")
-                .setContentText("Background helper is active")
+                .setContentText("YouTube playback helper is active")
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
                 .build();
+    }
+
+    @Override
+    public void onDestroy() {
+        try {
+            if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+        } catch (Exception ignored) {
+        }
+        if (mediaSession != null) {
+            mediaSession.setActive(false);
+            mediaSession.release();
+            mediaSession = null;
+        }
+        super.onDestroy();
     }
 
     @Override
