@@ -7,16 +7,10 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.view.Gravity;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import org.mozilla.geckoview.GeckoRuntime;
 import org.mozilla.geckoview.GeckoSession;
@@ -30,9 +24,7 @@ public class MainActivity extends Activity {
     private GeckoView geckoView;
     private GeckoRuntime runtime;
     private GeckoSession session;
-    private LinearLayout topBar;
     private boolean isFullscreen = false;
-    private final Handler uiHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,59 +33,15 @@ public class MainActivity extends Activity {
         window.setStatusBarColor(Color.rgb(5, 5, 8));
         window.setNavigationBarColor(Color.rgb(5, 5, 8));
 
-        LinearLayout shell = new LinearLayout(this);
-        shell.setOrientation(LinearLayout.VERTICAL);
-        shell.setBackgroundColor(Color.rgb(5, 5, 8));
-        shell.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        topBar = new LinearLayout(this);
-        topBar.setOrientation(LinearLayout.HORIZONTAL);
-        topBar.setGravity(Gravity.CENTER_VERTICAL);
-        topBar.setPadding(dp(10), dp(4), dp(8), dp(4));
-        topBar.setBackgroundColor(Color.rgb(5, 5, 8));
-        topBar.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(39)));
-
-        TextView title = new TextView(this);
-        title.setText("▶ Xtube");
-        title.setTextColor(Color.WHITE);
-        title.setTextSize(14f);
-        title.setGravity(Gravity.CENTER_VERTICAL);
-        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        topBar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
-
-        TextView home = new TextView(this);
-        home.setText("YouTube");
-        home.setTextColor(Color.WHITE);
-        home.setTextSize(11f);
-        home.setGravity(Gravity.CENTER);
-        home.setBackgroundColor(Color.rgb(35, 35, 42));
-        home.setOnClickListener(v -> loadUrl("https://www.youtube.com/"));
-        topBar.addView(home, new LinearLayout.LayoutParams(dp(76), dp(28)));
-
-        TextView settings = new TextView(this);
-        settings.setText("⚙");
-        settings.setTextColor(Color.WHITE);
-        settings.setTextSize(18f);
-        settings.setGravity(Gravity.CENTER);
-        settings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
-        topBar.addView(settings, new LinearLayout.LayoutParams(dp(38), ViewGroup.LayoutParams.MATCH_PARENT));
-
-        FrameLayout browserFrame = new FrameLayout(this);
-        browserFrame.setBackgroundColor(Color.rgb(5, 5, 8));
-        browserFrame.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(Color.rgb(5, 5, 8));
+        root.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         geckoView = new GeckoView(this);
         geckoView.setBackgroundColor(Color.rgb(5, 5, 8));
         geckoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        geckoView.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_DOWN && !isFullscreen) showTopBarTemporarily();
-            return false;
-        });
-        browserFrame.addView(geckoView);
-
-        shell.addView(topBar);
-        shell.addView(browserFrame);
-        setContentView(shell);
+        root.addView(geckoView);
+        setContentView(root);
 
         runtime = GeckoRuntime.create(this);
         installBuiltInExtension("resource://android/assets/extensions/ublock_origin.xpi", "uBlock0@raymondhill.net");
@@ -123,24 +71,7 @@ public class MainActivity extends Activity {
         geckoView.setSession(session);
 
         startBackgroundHelper();
-        showTopBarTemporarily();
         loadUrl("https://www.youtube.com/");
-    }
-
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
-
-    private void showTopBarTemporarily() {
-        if (topBar == null || isFullscreen) return;
-        topBar.setVisibility(View.VISIBLE);
-        topBar.animate().alpha(1f).setDuration(100).start();
-        uiHandler.removeCallbacksAndMessages(null);
-        uiHandler.postDelayed(() -> {
-            if (topBar != null && !isFullscreen) {
-                topBar.animate().alpha(0f).setDuration(220).withEndAction(() -> topBar.setVisibility(View.GONE)).start();
-            }
-        }, 1500);
     }
 
     private void applyFullscreen(boolean fullScreen) {
@@ -155,10 +86,8 @@ public class MainActivity extends Activity {
                     View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
             );
-            if (topBar != null) topBar.setVisibility(View.GONE);
         } else {
             decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-            showTopBarTemporarily();
         }
     }
 
@@ -199,7 +128,6 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         startBackgroundHelper();
-        showTopBarTemporarily();
     }
 
     @Override
@@ -214,7 +142,6 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        uiHandler.removeCallbacksAndMessages(null);
         if (session != null) session.close();
         super.onDestroy();
     }
