@@ -1,4 +1,4 @@
-name: Build Xtube 1.3.1
+name: Build Xtube 1.3.2
 
 on:
   workflow_dispatch:
@@ -53,13 +53,13 @@ jobs:
           mkdir -p apk output
           FILE=$(find app/build/outputs/apk -name "*debug*.apk" -type f | head -n 1)
           test -n "$FILE"
-          cp "$FILE" apk/Xtube-v1.3.1-debug.apk
-          cp "$FILE" output/Xtube-v1.3.1-debug.apk
+          cp "$FILE" apk/Xtube-v1.3.2-debug.apk
+          cp "$FILE" output/Xtube-v1.3.2-debug.apk
           ls -lh apk output
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Xtube-v1.3.1-build-output
+          name: Xtube-v1.3.2-build-output
           path: output/
           if-no-files-found: warn
       - name: Commit file
@@ -68,11 +68,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f apk/Xtube-v1.3.1-debug.apk app/src/isolated/assets/extensions/ublock_origin.xpi app/src/isolated/assets/extensions/ublock_origin_source.txt
+          git add -f apk/Xtube-v1.3.2-debug.apk app/src/isolated/assets/extensions/ublock_origin.xpi app/src/isolated/assets/extensions/ublock_origin_source.txt
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "Add Xtube 1.3.1 debug APK [skip ci]"
+          git commit -m "Add Xtube 1.3.2 debug APK [skip ci]"
           git pull --rebase origin main || true
           git push || echo "Push failed, but APK artifact is already uploaded"
